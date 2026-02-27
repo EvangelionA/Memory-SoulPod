@@ -1,95 +1,63 @@
-# SoulPod
+# Memory-SoulPod
 
-> *以记忆为核，筑灵魂之荚。*
-> *在光标的闪烁中，见字如面，温润如初。*
->
-> *A vessel where memories breathe, a sanctuary where echoes linger.*
-> *Capturing the essence of a soul in a timeless pod, where love finds a voice and never fades away.*
+> *见字如面，温润如初。*
 
----
+一个通过 AI 技术为逝去亲人构建永恒数字载体的开源项目。
 
-## 1. 项目核心主旨 (Core Intent)
+## 简介
 
-> 缅怀与对话。本项目旨在通过 AI 技术，为用户提供一个能够与已故亲人进行日常对话、寻求情感慰藉的数字载体。
+Memory-SoulPod 旨在通过"人格解耦"技术，将亲人的记忆、性格和语气从具体的 AI 模型中剥离，封装为标准化的数字资产包。让用户能够与已故亲人进行日常对话，延续情感的纽带。
 
----
+## 核心特性
 
-## 2. 核心哲学：人格解耦与资产化 (Decoupling & Assetization)
+- **人格解耦**：将人的特质（记忆、性格、语气）与 AI 模型分离
+- **数字资产化**：封装为可永久保存、跨平台迁移的标准化文件包
+- **三位一体架构**：
+  - 长期记忆 (RAG Memory)
+  - 人物画像 (User Profile)
+  - 行为规范 (System Prompts)
 
-| 概念 | 定义 |
-|------|------|
-| **解耦 (Decoupling)** | 将"人"的特质（记忆、性格、语气）从具体的 AI 模型（如 GPT, Claude）中剥离 |
-| **资产化 (Assetization)** | 将剥离出的特质封装为标准化的文件包（Digital Twin Package），使其成为可以永久保存、跨平台迁移的个人数字资产 |
-
----
-
-## 3. 三位一体架构 (The Trinity Architecture)
-
-载体由以下三个核心逻辑块构成：
-
-### 3.1 人物画像 (profile.json) —— 定义"他是谁"
-
-| 维度 | 说明 |
-|------|------|
-| **Basic Info** | 姓名、生卒年、生前职业、与你的关系 |
-| **Personality** | 五大人格维度 (0.0-1.0)：开放性、责任心、外向性、宜人性、神经质；性格关键词 |
-| **Linguistic Style** | 常用语/口头禅、语气词偏好、方言/语言 |
-| **Knowledge & Interests** | 爱好、最擅长的领域、常用电子设备 |
-
-### 3.2 长期记忆库 (memories/) —— 定义"他记得什么"
-
-| 层次 | 说明 |
-|------|------|
-| **事实记忆** | 生日、家乡、工作经历、家族成员名字 |
-| **情感记忆** | 共同经历的难忘瞬间（旅行、争吵、和解） |
-| **价值观记忆** | 对人生的看法、对你的期望、信奉的准则 |
-
-
-### 3.3 行为规范 (system_prompts.txt) —— 定义"他如何相处"
-
-- **自我定位**："你是[名字]，是我的[关系]，在平行世界陪伴我"
-- **情绪边界**：用户极度悲伤时，优先安慰而非逻辑建议
-- **局限性处理**：记忆库无相关信息时，诚实表达模糊印象，不编造事实
-- **禁止事项**：不提及 AI 身份，不扮演百科全书
-
----
-
-## 4. 标准载体规范 (Package Specification)
-
-SoulPod 文件夹必须包含以下标准组件：
+## 项目结构
 
 ```
-DigitalTwinPackage_姓名/
-├── profile.json          # 核心：人格参数、身份背景、关系定义
-├── system_prompts.txt    # 灵魂：交互逻辑、情绪边界、对话风格
-├── config.json           # 技术：模型适配、Embedding 版本、检索策略
-├── memories/             # 记忆：分块后的向量数据或原始文本块
-│   ├── index.bin / .sqlite
-│   └── raw_memories.json
-└── assets/               # 可选：亲人的照片、声音克隆模型路径（留作扩展）
+Memory-SoulPod/
+├── Core/                    # 核心文档
+│   ├── core.md              # 核心架构规范
+│   └── description.md       # 项目详细描述
+├── src/                     # 源代码
+├── config/                  # 配置文件
+├── docs/                    # 文档目录
+├── examples/                # 示例
+└── README.md
 ```
 
-| 文件/目录 | 说明 |
-|----------|------|
-| `profile.json` | 核心：人格参数、身份背景、关系定义 |
-| `system_prompts.txt` | 灵魂：交互逻辑、情绪边界、对话风格 |
-| `config.json` | 技术：模型适配、Embedding 版本、检索策略 |
-| `memories/` | 记忆：分块后的向量数据或原始文本块 |
-| `assets/` | 可选：亲人的照片、声音克隆模型路径（留作扩展） | |
+## 快速开始
 
----
+```bash
+# 克隆项目
+git clone https://github.com/your-repo/Memory-SoulPod.git
+cd Memory-SoulPod
 
-## 5. 开发路线图 (Roadmap)
+# 查看 Core 文档了解项目架构
+ls Core/
+```
 
-| 阶段 | 名称 | 目标 |
-|------|------|------|
-| **Phase 1** | 数据提取 (Data Extraction) | 攻克微信记录等原始碎片数据的清洗与"第一人称"化改写 |
-| **Phase 2** | 人格建模 (Persona Modeling) | 研究如何根据素材反向生成 profile.json 的参数 |
-| **Phase 3** | 通用适配 (Universal Adaptation) | 开发 MCP Server 或 Web 中间件，使 SoulPod 能够挂载到主流 AI 助手 |
+## 核心准则
 
----
+- **拒绝幻觉**：宁肯表达模糊印象，严禁编造关键人生经历
+- **去 AI 化**：不提及"模型"或"算法"，保持特定人的身份
+- **隐私至上**：优先保护数据的本地化与私密性
 
-## 6. 约束与禁忌 (Constraints)
+## 开发路线
 
-- **真实性优先**：严禁 AI 在缺乏事实依据的情况下胡乱编造关于亲人的关键人生经历
-- **去 AI 化**：在交互中严禁提及自己是"人工智能"或"语言模型"，始终保持亲人的身份设定
+1. **数据炼金** - 将碎片化聊天记录清洗为记忆块
+2. **灵魂建模** - 自动化提取性格参数与语言模式
+3. **无缝陪伴** - 跨平台挂载到主流 AI 助手
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 许可证
+
+MIT License

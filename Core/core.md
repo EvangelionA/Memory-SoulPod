@@ -15,6 +15,7 @@
 - `/system_prompts.txt` (交互准则与身份设定)
 - `/config.json` (技术底座配置：Embedding 模型、检索阈值)
 - `/memories/` (持久化向量库与原始切片数据)
+- `/assets/` (图片、音频、视频等非文本素材)
 
 ## 4. 核心准则 (The Golden Rules)
 - **拒绝幻觉**：若记忆库无相关事实，宁可表达模糊印象，严禁编造关键人生经历。
