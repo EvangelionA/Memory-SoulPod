@@ -16,16 +16,83 @@
         }
 
         body {
-            background: radial-gradient(circle at top, #14161a 0, #020308 55%, #000 100%);
+            background: radial-gradient(ellipse at 50% 0%, #0a0b0d 0%, #030406 40%, #000 100%);
             margin: 0;
             font-family: "Fira Code", monospace;
             color: var(--term-fg);
             overflow: hidden;
+            position: relative;
+        }
+
+        /* 夜晚星空：离散分布，有大有小 */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle at 15% 20%, rgba(255,255,255,0.55) 2px, transparent 2px),
+                radial-gradient(circle at 85% 15%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 45% 65%, rgba(255,255,255,0.5) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 72% 85%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 8% 72%, rgba(255,255,255,0.45) 1px, transparent 1px),
+                radial-gradient(circle at 92% 45%, rgba(255,255,255,0.45) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 28% 90%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 55% 12%, rgba(255,255,255,0.5) 2px, transparent 2px),
+                radial-gradient(circle at 65% 55%, rgba(255,255,255,0.3) 1px, transparent 1px),
+                radial-gradient(circle at 22% 38%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 78% 68%, rgba(255,255,255,0.4) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 5% 95%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 95% 78%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 35% 8%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 18% 52%, rgba(255,255,255,0.35) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 88% 62%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 42% 92%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 68% 35%, rgba(255,255,255,0.45) 2px, transparent 2px),
+                radial-gradient(circle at 3% 42%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 52% 78%, rgba(255,255,255,0.4) 1.5px, transparent 1.5px);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            animation: star-twinkle 3s ease-in-out infinite;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                radial-gradient(circle at 38% 42%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 62% 28%, rgba(255,255,255,0.35) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 12% 58%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 88% 82%, rgba(255,255,255,0.35) 2px, transparent 2px),
+                radial-gradient(circle at 50% 5%, rgba(255,255,255,0.45) 1px, transparent 1px),
+                radial-gradient(circle at 25% 75%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 75% 18%, rgba(255,255,255,0.4) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 10% 35%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 96% 88%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 58% 48%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 32% 22%, rgba(255,255,255,0.45) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 82% 55%, rgba(255,255,255,0.35) 1px, transparent 1px),
+                radial-gradient(circle at 48% 3%, rgba(255,255,255,0.4) 1px, transparent 1px),
+                radial-gradient(circle at 7% 88%, rgba(255,255,255,0.35) 1.5px, transparent 1.5px),
+                radial-gradient(circle at 93% 32%, rgba(255,255,255,0.4) 1px, transparent 1px);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            animation: star-twinkle 3s ease-in-out infinite 1.5s;
+        }
+
+        @keyframes star-twinkle {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
 
         /* 基础 CRT 层 */
         .crt-wrapper {
             position: relative;
+            z-index: 1;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -34,7 +101,8 @@
             box-shadow:
                 0 0 0 1px rgba(255, 255, 255, 0.02),
                 0 30px 80px rgba(0, 0, 0, 0.9),
-                0 0 80px rgba(59, 201, 219, 0.22);
+                0 0 60px rgba(232, 184, 109, 0.12),
+                0 0 100px rgba(220, 170, 140, 0.06);
             max-width: 1120px;
             margin: 2vh auto;
             border-radius: 16px;
@@ -58,43 +126,15 @@
             mix-blend-mode: soft-light;
         }
 
-        /* 轻微抖动 + 亮度呼吸 */
-        @keyframes ambient-flicker {
-            0%,
-            100% { opacity: 0.98; transform: translateY(0); }
-            50% { opacity: 1; transform: translateY(0.3px); }
-            52% { opacity: 0.99; transform: translateY(-0.3px); }
-            54% { opacity: 1; transform: translateY(0); }
-        }
-
-        .ambient {
-            animation: ambient-flicker 4s infinite;
-        }
-
-        /* ASCII SOULPOD 扫描线描绘效果 */
+        /* ASCII SOULPOD 标题：居中、暖色、无闪烁 */
         .scanned-text {
             display: inline-block;
             white-space: pre;
             font-size: 0.65rem;
             line-height: 1.05;
-            background: linear-gradient(
-                to bottom,
-                transparent,
-                var(--term-accent-cyan) 50%,
-                transparent
-            );
-            background-size: 100% 30px;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            animation: scan-move 4s linear infinite;
-            filter: drop-shadow(0 0 3px rgba(59, 201, 219, 0.4));
-            opacity: 0.9;
-        }
-
-        @keyframes scan-move {
-            0% { background-position: 0 -120px; }
-            100% { background-position: 0 120px; }
+            color: #e8b86d;
+            filter: drop-shadow(0 0 4px rgba(232, 184, 109, 0.35));
+            opacity: 0.95;
         }
 
         .cyan-text {
@@ -121,7 +161,7 @@
         #chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 1.75rem 2rem 1rem 2rem;
+            padding: 0.75rem 2rem 0.5rem 2rem;
             scrollbar-width: thin;
             scrollbar-color: var(--term-border) transparent;
         }
@@ -140,7 +180,7 @@
         }
 
         .message {
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             animation: slide-in 0.22s ease-out;
         }
 
@@ -181,16 +221,16 @@
             font-size: 0.65rem;
         }
 
-        /* 输入行：固定在对话区域底部，始终在历史记录下方 */
+        /* 输入行：作为最后一行，融入终端历史，而不是独立的大框 */
         .input-line {
-            flex-shrink: 0;
             display: flex;
             align-items: center;
-            gap: 0;
-            padding: 1rem 2rem 1.5rem 2rem;
+            gap: 0.35rem;
+            padding: 0;
+            margin-top: 0.5rem;
             font-size: 0.95rem;
             color: var(--term-fg);
-            border-top: 1px solid var(--term-border);
+            border: none;
         }
 
         .input-line .prompt-prefix {
@@ -199,18 +239,15 @@
             user-select: none;
         }
 
-        #user-input {
-            background: transparent;
-            border: none;
+        #cli-input {
+            min-height: 1em;
             outline: none;
+            border: none;
+            background: transparent;
             color: var(--term-fg);
-            flex: 1;
             font-size: 0.95rem;
-            caret-color: transparent;
-        }
-
-        #user-input::placeholder {
-            color: rgba(126, 130, 145, 0.6);
+            white-space: pre;
+            display: inline-block;
         }
 
         .cursor {
@@ -231,7 +268,7 @@
             border: 1px solid var(--term-accent-pink);
             color: var(--term-accent-pink);
             text-transform: uppercase;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.35rem;
             display: inline-block;
             letter-spacing: 1px;
         }
@@ -294,10 +331,10 @@
     </style>
 </head>
 <body>
-    <div class="crt-wrapper ambient">
+    <div class="crt-wrapper">
         <!-- Header -->
-        <header class="p-6 sm:p-8 border-b border-[#2c2e33] flex justify-between items-end relative z-10">
-            <div>
+        <header class="p-4 sm:p-5 border-b border-[#2c2e33] flex justify-between items-end relative z-10">
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
                 <div class="scanned-text">
 ███████╗ ██████╗ ██╗   ██╗██╗     ██████╗  ██████╗ ██████╗ 
 ██╔════╝██╔═══██╗██║   ██║██║     ██╔══██╗██╔═══██╗██╔══██╗
@@ -306,16 +343,16 @@
 ███████║╚██████╔╝╚██████╔╝███████╗██║     ╚██████╔╝██████╔╝
 ╚══════╝ ╚═════╝  ╚═════╝ ╚══════╝╚═╝      ╚═════╝ ╚═════╝ 
                 </div>
-                <div class="text-[10px] dim-text mt-2 opacity-70 tracking-[0.3em]">
-                    NEURAL INTERFACE | MEMORY_SOULPOD
+                <div class="text-[10px] dim-text mt-1 opacity-70 tracking-[0.3em]">
+                    MEMORY | SOULPOD
                 </div>
             </div>
-            <div class="text-right pb-1 space-y-1">
+            <div class="flex-shrink-0 text-right pb-1 space-y-1">
                 <div class="text-[10px] pink-text tracking-wider">
-                    STATUS: ENCRYPTED
+                    STATUS: LOCAL
                 </div>
                 <div class="text-[10px] opacity-40 font-light">
-                    SESSION: #A8F-0092
+                    ROLE: ********
                 </div>
                 <div class="flex justify-end gap-2">
                     <span class="pill dim-text/80">RAG MEMORY</span>
@@ -330,41 +367,24 @@
             <div id="chat-messages">
                 <!-- 系统提示信息 -->
                 <div class="message bot-msg">
-                    <span class="security-tag">Security Warning</span>
-                    <p class="text-xs sm:text-sm leading-relaxed border-l-2 border-[#ff6b6b] pl-4 mb-3">
-                        Memory-SoulPod is currently in experimental mode. Cognitive and long-term memory bindings are enabled.
+                    <span class="security-tag">CORE INTENT</span>
+                    <p class="text-xs sm:text-sm leading-relaxed border-l-2 border-[#ff6b6b] pl-4 mb-2">
+                        <em>A vessel where memories breathe, a sanctuary where echoes linger.</em>
                         <br>
-                        <span class="opacity-50 text-[10px]">
-                            Baseline recommendation: keep data local, use least-privilege tools, verify memories before externalizing.
-                        </span>
+                        <em>Capturing the essence of a soul in a timeless pod, where love finds a voice and never fades away.</em>
+                        <br>
+                        <em>以记忆为核，筑灵魂之荚。</em>
+                        <br>
+                        <em>在光标的闪烁中，见字如面，温润如初。</em>
                     </p>
                 </div>
 
-                <div class="message bot-msg">
-                    <div class="msg-bubble">
-                        <p class="text-sm sm:text-[0.95rem] leading-relaxed">
-                            已连接到克隆记忆：<span class="cyan-text font-bold">小杰</span>（输入 <span class="dim-text">'exit'</span> 可在命令行中结束对话）。
-                            <br>
-                            这里是对应的 Web 界面，你可以直接在下方命令行中输入想对他说的话。
-                        </p>
-                    </div>
-                    <div class="mt-1 meta-line dim-text">
-                        LINK_STABLE // LATENCY &lt; 40ms
-                    </div>
+                <!-- 终端风格输入行，作为历史中的最后一行 -->
+                <div class="input-line" id="input-line">
+                    <span class="prompt-prefix">&gt;&gt;&gt;</span>
+                    <span id="cli-input" contenteditable="true" spellcheck="false"></span>
+                    <div class="cursor"></div>
                 </div>
-            </div>
-
-            <!-- 输入行始终在历史记录下方 -->
-            <div class="input-line">
-                <span class="prompt-prefix">&gt;&gt;&gt;</span>
-                <div class="cursor"></div>
-                <input
-                    type="text"
-                    id="user-input"
-                    placeholder="Send a message (/? for help)"
-                    autocomplete="off"
-                    autofocus
-                >
             </div>
         </main>
     </div>
@@ -372,7 +392,8 @@
     <script>
         const chatFlow = document.getElementById("chat-flow");
         const chatMessages = document.getElementById("chat-messages");
-        const userInput = document.getElementById("user-input");
+        const cliInput = document.getElementById("cli-input");
+        const inputLine = document.getElementById("input-line");
 
         // 后端 API 地址（与 server.py 一致；若用静态文件打开页面，需保证同源或 CORS 已开）
         const API_BASE = "http://localhost:8000";
@@ -393,29 +414,20 @@
             return `${hh}:${mm} // SOULPOD`;
         }
 
-        function appendMessage(role, text, extraMeta) {
-            const msgDiv = document.createElement("div");
-            msgDiv.className = `message ${role}-msg`;
-
+        // 终端式：简单一行输出，user 行前面带 >>>，bot 行直接输出
+        function appendMessage(role, text) {
+            const line = document.createElement("div");
+            line.className = "message";
             const safeText = escapeHtml(text).replace(/\n/g, "<br>");
+
             if (role === "user") {
-                msgDiv.innerHTML = `
-                    <div class="msg-bubble msg-bubble-user">
-                        <span class="prompt-prefix">&gt;&gt;&gt;</span>
-                        <span class="text-sm sm:text-[0.95rem]">${safeText}</span>
-                    </div>
-                `;
+                line.innerHTML = `&gt;&gt;&gt; ${safeText}`;
             } else {
-                const meta = extraMeta || nowMeta();
-                msgDiv.innerHTML = `
-                    <div class="msg-bubble">
-                        <p class="text-sm sm:text-[0.95rem] leading-relaxed whitespace-pre-wrap">${safeText}</p>
-                    </div>
-                    <div class="mt-0.5 meta-line dim-text">${meta}</div>
-                `;
+                line.innerHTML = safeText;
             }
 
-            chatMessages.appendChild(msgDiv);
+            // 新输出插在输入行之前，保证输入行始终在最底部
+            chatMessages.insertBefore(line, inputLine);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
@@ -455,7 +467,7 @@
         }
 
         async function sendUserMessage() {
-            const raw = userInput.value;
+            const raw = cliInput.textContent || "";
             const text = raw.trim();
 
             if (!text) {
@@ -464,35 +476,16 @@
 
             chatHistory.push({ role: "user", content: text });
             appendMessage("user", text);
-            userInput.value = "";
+            cliInput.textContent = "";
 
-            appendTypingIndicator();
-
-            try {
-                const res = await fetch(`${API_BASE}/chat`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ messages: chatHistory }),
-                });
-                const data = await res.json().catch(() => ({}));
-
-                if (!res.ok) {
-                    throw new Error(data.detail || res.statusText);
-                }
-
-                const reply = (data.reply || "").trim() || "（无回复内容）";
-                chatHistory.push({ role: "assistant", content: reply });
-                removeTypingIndicator();
-                appendMessage("bot", reply);
-            } catch (err) {
-                removeTypingIndicator();
-                showBackendError();
-                chatHistory.pop();
-            }
+            // 暂时去除与后端的交互，直接使用 echo 形式回复
+            const reply = text || "（无输入内容）";
+            chatHistory.push({ role: "assistant", content: reply });
+            appendMessage("bot", reply);
         }
 
-        userInput.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && document.activeElement === cliInput) {
                 if (e.shiftKey) {
                     e.preventDefault();
                     return;
@@ -502,11 +495,11 @@
             }
         });
 
-        document.addEventListener("click", () => userInput.focus());
+        document.addEventListener("click", () => cliInput.focus());
 
         window.onload = () => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            userInput.focus();
+            cliInput.focus();
         };
     </script>
 </body>
