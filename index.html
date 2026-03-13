@@ -225,7 +225,7 @@
         .input-line {
             display: flex;
             align-items: center;
-            gap: 0.35rem;
+            gap: 0.1rem;
             padding: 0;
             margin-top: 0.5rem;
             font-size: 0.95rem;
@@ -235,7 +235,7 @@
 
         .input-line .prompt-prefix {
             color: var(--term-fg);
-            margin-right: 0.35rem;
+            margin-right: 0.15rem;
             user-select: none;
         }
 
@@ -248,28 +248,37 @@
             font-size: 0.95rem;
             white-space: pre;
             display: inline-block;
+            caret-color: transparent;
         }
 
-        .cursor {
-            width: 2px;
-            height: 1em;
-            margin-right: 2px;
+        .input-cursor {
+            width: 3px;
+            height: 1.1em;
+            margin-left: 0;
             background: var(--term-fg);
-            animation: blink 1s step-end infinite;
+            animation: cursor-blink 1s step-end infinite;
+            display: inline-block;
+            vertical-align: text-bottom;
         }
 
-        @keyframes blink {
+        @keyframes cursor-blink {
             50% { opacity: 0; }
+        }
+
+        .core-intent-border {
+            border-color: #e8b86d;
         }
 
         .security-tag {
             font-size: 0.7rem;
-            padding: 2px 8px;
-            border: 1px solid var(--term-accent-pink);
-            color: var(--term-accent-pink);
+            padding: 4px 8px;
+            border: 1px dashed rgba(255, 150, 150, 0.55);
+            color: rgba(255, 150, 150, 0.7);
             text-transform: uppercase;
             margin-bottom: 0.35rem;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             letter-spacing: 1px;
         }
 
@@ -333,8 +342,9 @@
 <body>
     <div class="crt-wrapper">
         <!-- Header -->
-        <header class="p-4 sm:p-5 border-b border-[#2c2e33] flex justify-between items-end relative z-10">
-            <div class="flex-1 flex flex-col items-center justify-center text-center">
+        <header class="p-4 sm:p-5 border-b border-[#2c2e33] flex items-end relative z-10">
+            <div class="flex-1"></div>
+            <div class="flex-shrink-0 flex flex-col items-center text-center">
                 <div class="scanned-text">
 ███████╗ ██████╗ ██╗   ██╗██╗     ██████╗  ██████╗ ██████╗ 
 ██╔════╝██╔═══██╗██║   ██║██║     ██╔══██╗██╔═══██╗██╔══██╗
@@ -347,7 +357,7 @@
                     MEMORY | SOULPOD
                 </div>
             </div>
-            <div class="flex-shrink-0 text-right pb-1 space-y-1">
+            <div class="flex-1 flex flex-col items-end justify-end pb-1 space-y-1 text-right">
                 <div class="text-[10px] pink-text tracking-wider">
                     STATUS: LOCAL
                 </div>
@@ -367,8 +377,7 @@
             <div id="chat-messages">
                 <!-- 系统提示信息 -->
                 <div class="message bot-msg">
-                    <span class="security-tag">CORE INTENT</span>
-                    <p class="text-xs sm:text-sm leading-relaxed border-l-2 border-[#ff6b6b] pl-4 mb-2">
+                    <p class="text-sm sm:text-base leading-relaxed border-l-2 border-dashed pl-4 mb-2 core-intent-border">
                         <em>A vessel where memories breathe, a sanctuary where echoes linger.</em>
                         <br>
                         <em>Capturing the essence of a soul in a timeless pod, where love finds a voice and never fades away.</em>
@@ -383,7 +392,7 @@
                 <div class="input-line" id="input-line">
                     <span class="prompt-prefix">&gt;&gt;&gt;</span>
                     <span id="cli-input" contenteditable="true" spellcheck="false"></span>
-                    <div class="cursor"></div>
+                    <span class="input-cursor" aria-hidden="true"></span>
                 </div>
             </div>
         </main>
