@@ -291,36 +291,6 @@
             letter-spacing: 0.14em;
         }
 
-        .typing-indicator {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            position: relative;
-            animation: spin 1s linear infinite;
-        }
-
-        .typing-indicator .dot {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background-color: rgba(193, 194, 197, 0.9);
-            top: 50%;
-            left: 50%;
-            transform-origin: center center;
-        }
-
-        .typing-indicator .dot:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg) translateY(-8px); }
-        .typing-indicator .dot:nth-child(2) { transform: translate(-50%, -50%) rotate(60deg) translateY(-8px); }
-        .typing-indicator .dot:nth-child(3) { transform: translate(-50%, -50%) rotate(120deg) translateY(-8px); }
-        .typing-indicator .dot:nth-child(4) { transform: translate(-50%, -50%) rotate(180deg) translateY(-8px); }
-        .typing-indicator .dot:nth-child(5) { transform: translate(-50%, -50%) rotate(240deg) translateY(-8px); }
-        .typing-indicator .dot:nth-child(6) { transform: translate(-50%, -50%) rotate(300deg) translateY(-8px); }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         @media (max-width: 900px) {
             .crt-wrapper {
                 margin: 0;
@@ -440,28 +410,30 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
+        let typingDotsInterval = null;
+
         function appendTypingIndicator() {
             const container = document.createElement("div");
             container.className = "message bot-msg";
             container.id = "typing-indicator";
-            container.innerHTML = `
-                <div class="msg-bubble">
-                    <span class="typing-indicator">
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                    </span>
-                </div>
-                <div class="mt-0.5 meta-line dim-text">Thinking...</div>
-            `;
-            chatMessages.appendChild(container);
+            container.innerHTML = `<div class="mt-0.5 meta-line dim-text">Typing<span id="typing-dots">.</span></div>`;
+            chatMessages.insertBefore(container, inputLine);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            let dotCount = 1;
+            typingDotsInterval = setInterval(() => {
+                const dotsEl = document.getElementById("typing-dots");
+                if (!dotsEl) return;
+                dotCount = dotCount >= 3 ? 0 : dotCount + 1;
+                dotsEl.textContent = ".".repeat(dotCount) || ".";
+            }, 350);
         }
 
         function removeTypingIndicator() {
+            if (typingDotsInterval) {
+                clearInterval(typingDotsInterval);
+                typingDotsInterval = null;
+            }
             const indicator = document.getElementById("typing-indicator");
             if (indicator) {
                 indicator.remove();
@@ -487,10 +459,138 @@
             appendMessage("user", text);
             cliInput.textContent = "";
 
-            // 暂时去除与后端的交互，直接使用 echo 形式回复
-            const reply = text || "（无输入内容）";
-            chatHistory.push({ role: "assistant", content: reply });
-            appendMessage("bot", reply);
+            appendTypingIndicator();
+
+            try {
+                const res = await fetch(`${API_BASE}/chat/stream`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messages: chatHistory }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || res.statusText);
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let fullReply = "";
+                let fullPending = "";
+                let fullDisplayed = "";
+                let botLine = null;
+                let buffer = "";
+                let streamDone = false;
+                let typingScheduled = false;
+                const TYPING_SPEED_MS = 52;
+
+                let resolveTypingDone;
+                const typingDonePromise = new Promise((r) => { resolveTypingDone = r; });
+
+                function scheduleTypeChar() {
+                    if (fullDisplayed.length >= fullPending.length) {
+                        typingScheduled = false;
+                        if (streamDone) resolveTypingDone();
+                        return;
+                    }
+                    if (typingScheduled) return;
+                    typingScheduled = true;
+                    setTimeout(() => {
+                        typingScheduled = false;
+                        fullDisplayed = fullPending.slice(0, fullDisplayed.length + 1);
+                        if (botLine) {
+                            botLine.textContent = fullDisplayed;
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        }
+                        scheduleTypeChar();
+                    }, TYPING_SPEED_MS);
+                }
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const events = buffer.split("\n\n");
+                    buffer = events.pop() || "";
+
+                    for (const event of events) {
+                        const line = event.split("\n")[0];
+                        if (!line || !line.startsWith("data: ")) continue;
+                        const payload = line.slice(6);
+                        if (payload === "[DONE]" || payload === "") continue;
+
+                        let data;
+                        try {
+                            data = JSON.parse(payload);
+                        } catch (_) {
+                            continue;
+                        }
+
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        if (data.done) {
+                            break;
+                        }
+                        if (data.delta) {
+                            fullReply += data.delta;
+                            fullPending += data.delta;
+                            if (!botLine) {
+                                removeTypingIndicator();
+                                botLine = document.createElement("div");
+                                botLine.className = "message bot-msg";
+                                botLine.id = "streaming-bot-msg";
+                                chatMessages.insertBefore(botLine, inputLine);
+                            }
+                            scheduleTypeChar();
+                        }
+                    }
+                }
+
+                if (buffer.trim()) {
+                    const line = buffer.split("\n")[0];
+                    if (line && line.startsWith("data: ")) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.delta) {
+                                fullReply += data.delta;
+                                fullPending += data.delta;
+                            }
+                            if (data.delta && !botLine) {
+                                removeTypingIndicator();
+                                botLine = document.createElement("div");
+                                botLine.className = "message bot-msg";
+                                botLine.id = "streaming-bot-msg";
+                                chatMessages.insertBefore(botLine, inputLine);
+                            }
+                            if (data.delta) scheduleTypeChar();
+                        } catch (_) {}
+                    }
+                }
+
+                streamDone = true;
+                if (fullDisplayed.length >= fullPending.length) {
+                    resolveTypingDone();
+                }
+
+                await typingDonePromise;
+
+                if (botLine) {
+                    botLine.id = "";
+                    botLine.innerHTML = escapeHtml(fullReply).replace(/\n/g, "<br>");
+                } else {
+                    removeTypingIndicator();
+                    fullReply = fullReply.trim() || "（无回复内容）";
+                    appendMessage("bot", fullReply);
+                }
+
+                chatHistory.push({ role: "assistant", content: fullReply });
+            } catch (err) {
+                removeTypingIndicator();
+                showBackendError();
+                chatHistory.pop();
+            }
         }
 
         document.addEventListener("keydown", (e) => {
