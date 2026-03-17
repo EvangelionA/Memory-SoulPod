@@ -145,6 +145,24 @@
             color: var(--term-accent-pink);
         }
 
+        .status-connecting {
+            color: #e8b86d;
+            animation: status-breathe 2.5s ease-in-out infinite;
+        }
+
+        .status-connected {
+            color: #22c55e;
+        }
+
+        .status-disconnected {
+            color: #ef4444;
+        }
+
+        @keyframes status-breathe {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+
         .dim-text {
             color: rgba(193, 194, 197, 0.6);
         }
@@ -189,32 +207,8 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* Ollama 风格：无气泡，纯文本流 */
-        .msg-bubble {
-            border-radius: 0;
-            padding: 0;
-            border: none;
-            background: none;
-        }
-
-        .msg-bubble-user {
-            border: none;
-            background: none;
-        }
-
         .bot-msg {
             color: var(--term-fg);
-        }
-
-        .user-msg {
-            color: var(--term-fg);
-            margin-left: 0;
-            text-align: left;
-        }
-
-        .user-msg .prompt-prefix {
-            color: var(--term-fg);
-            margin-right: 0.25rem;
         }
 
         .meta-line {
@@ -269,19 +263,6 @@
             border-color: #e8b86d;
         }
 
-        .security-tag {
-            font-size: 0.7rem;
-            padding: 4px 8px;
-            border: 1px dashed rgba(255, 150, 150, 0.55);
-            color: rgba(255, 150, 150, 0.7);
-            text-transform: uppercase;
-            margin-bottom: 0.35rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            letter-spacing: 1px;
-        }
-
         .pill {
             border-radius: 999px;
             padding: 0.15rem 0.5rem;
@@ -328,8 +309,8 @@
                 </div>
             </div>
             <div class="flex-1 flex flex-col items-end justify-end pb-1 space-y-1 text-right">
-                <div class="text-[10px] pink-text tracking-wider">
-                    STATUS: LOCAL
+                <div id="status-ollama" class="text-[10px] tracking-wider status-connecting">
+                    STATUS: UNKNOW
                 </div>
                 <div class="text-[10px] opacity-40 font-light">
                     ROLE: ********
@@ -369,15 +350,14 @@
     </div>
 
     <script>
-        const chatFlow = document.getElementById("chat-flow");
         const chatMessages = document.getElementById("chat-messages");
         const cliInput = document.getElementById("cli-input");
         const inputLine = document.getElementById("input-line");
 
-        // 后端 API 地址（与 server.py 一致；若用静态文件打开页面，需保证同源或 CORS 已开）
         const API_BASE = "http://localhost:8000";
+        const TYPING_DOTS_MAX = 6;
+        const TYPING_SPEED_MS = 52;
 
-        // 对话历史，供后端上下文使用
         let chatHistory = [];
 
         function escapeHtml(s) {
@@ -386,14 +366,7 @@
             return div.innerHTML;
         }
 
-        function nowMeta() {
-            const d = new Date();
-            const hh = String(d.getHours()).padStart(2, "0");
-            const mm = String(d.getMinutes()).padStart(2, "0");
-            return `${hh}:${mm} // SOULPOD`;
-        }
-
-        // 终端式：简单一行输出，user 行前面带 >>>，bot 行直接输出
+        /** 追加一条消息到输入行上方 */
         function appendMessage(role, text) {
             const line = document.createElement("div");
             line.className = "message";
@@ -424,7 +397,7 @@
             typingDotsInterval = setInterval(() => {
                 const dotsEl = document.getElementById("typing-dots");
                 if (!dotsEl) return;
-                dotCount = dotCount >= 3 ? 0 : dotCount + 1;
+                dotCount = dotCount >= TYPING_DOTS_MAX ? 0 : dotCount + 1;
                 dotsEl.textContent = ".".repeat(dotCount) || ".";
             }, 350);
         }
@@ -443,7 +416,7 @@
         function showBackendError() {
             appendMessage(
                 "bot",
-                "后端未连接或 Ollama 未运行。请先执行: 1) 启动 Ollama 并拉取 llama3；2) 在项目根目录运行 python -m uvicorn src.server:app --reload --host 0.0.0.0 --port 8000"
+                "后端未连接或 Ollama 未运行。请先执行: 1) 启动 Ollama 并拉取模型；2) 在项目根目录运行 python -m src.core"
             );
         }
 
@@ -482,7 +455,6 @@
                 let buffer = "";
                 let streamDone = false;
                 let typingScheduled = false;
-                const TYPING_SPEED_MS = 52;
 
                 let resolveTypingDone;
                 const typingDonePromise = new Promise((r) => { resolveTypingDone = r; });
@@ -506,6 +478,33 @@
                     }, TYPING_SPEED_MS);
                 }
 
+                function applyDelta(data) {
+                    if (data.error) throw new Error(data.error);
+                    if (data.done) return;
+                    if (!data.delta) return;
+                    fullReply += data.delta;
+                    fullPending += data.delta;
+                    if (!botLine) {
+                        removeTypingIndicator();
+                        botLine = document.createElement("div");
+                        botLine.className = "message bot-msg";
+                        botLine.id = "streaming-bot-msg";
+                        chatMessages.insertBefore(botLine, inputLine);
+                    }
+                    scheduleTypeChar();
+                }
+
+                function parseSSELine(line) {
+                    if (!line || !line.startsWith("data: ")) return null;
+                    const payload = line.slice(6);
+                    if (payload === "[DONE]" || payload === "") return null;
+                    try {
+                        return JSON.parse(payload);
+                    } catch (_) {
+                        return null;
+                    }
+                }
+
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -515,59 +514,14 @@
                     buffer = events.pop() || "";
 
                     for (const event of events) {
-                        const line = event.split("\n")[0];
-                        if (!line || !line.startsWith("data: ")) continue;
-                        const payload = line.slice(6);
-                        if (payload === "[DONE]" || payload === "") continue;
-
-                        let data;
-                        try {
-                            data = JSON.parse(payload);
-                        } catch (_) {
-                            continue;
-                        }
-
-                        if (data.error) {
-                            throw new Error(data.error);
-                        }
-                        if (data.done) {
-                            break;
-                        }
-                        if (data.delta) {
-                            fullReply += data.delta;
-                            fullPending += data.delta;
-                            if (!botLine) {
-                                removeTypingIndicator();
-                                botLine = document.createElement("div");
-                                botLine.className = "message bot-msg";
-                                botLine.id = "streaming-bot-msg";
-                                chatMessages.insertBefore(botLine, inputLine);
-                            }
-                            scheduleTypeChar();
-                        }
+                        const data = parseSSELine(event.split("\n")[0]);
+                        if (data) applyDelta(data);
                     }
                 }
 
-                if (buffer.trim()) {
-                    const line = buffer.split("\n")[0];
-                    if (line && line.startsWith("data: ")) {
-                        try {
-                            const data = JSON.parse(line.slice(6));
-                            if (data.delta) {
-                                fullReply += data.delta;
-                                fullPending += data.delta;
-                            }
-                            if (data.delta && !botLine) {
-                                removeTypingIndicator();
-                                botLine = document.createElement("div");
-                                botLine.className = "message bot-msg";
-                                botLine.id = "streaming-bot-msg";
-                                chatMessages.insertBefore(botLine, inputLine);
-                            }
-                            if (data.delta) scheduleTypeChar();
-                        } catch (_) {}
-                    }
-                }
+                const lastLine = buffer.split("\n")[0];
+                const lastData = parseSSELine(lastLine);
+                if (lastData) applyDelta(lastData);
 
                 streamDone = true;
                 if (fullDisplayed.length >= fullPending.length) {
@@ -606,9 +560,29 @@
 
         document.addEventListener("click", () => cliInput.focus());
 
+        async function updateOllamaStatus() {
+            const el = document.getElementById("status-ollama");
+            if (!el) return;
+            try {
+                const res = await fetch(`${API_BASE}/status`);
+                const data = await res.json().catch(() => ({}));
+                if (data.ollama) {
+                    el.textContent = "STATUS: LOCAL";
+                    el.className = "text-[10px] tracking-wider status-connected";
+                } else {
+                    el.textContent = "STATUS: UNKNOW";
+                    el.className = "text-[10px] tracking-wider status-disconnected";
+                }
+            } catch (_) {
+                el.textContent = "STATUS: UNKNOW";
+                el.className = "text-[10px] tracking-wider status-disconnected";
+            }
+        }
+
         window.onload = () => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             cliInput.focus();
+            updateOllamaStatus();
         };
     </script>
 </body>

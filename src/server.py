@@ -1,9 +1,10 @@
 """
 SoulPod HTTP API: 供前端 index.html 调用的聊天接口。
-在项目根目录执行: python -m uvicorn src.server:app --reload --host 0.0.0.0 --port 8000
-浏览器访问 http://localhost:8000/ 即可使用对话页。
+入口: python -m src.core
+访问: http://localhost:8000/
 """
 import json
+import urllib.request
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -13,8 +14,9 @@ from pydantic import BaseModel
 
 from src.liteLLM import ollama_chat, ollama_chat_stream
 
-# 项目根目录（假定在根目录启动 uvicorn）
 ROOT = Path(__file__).resolve().parent.parent
+OLLAMA_MODEL = "ollama/qwen3:8b"
+OLLAMA_BASE = "http://localhost:11434"
 
 app = FastAPI(title="SoulPod API", version="0.1.0")
 
@@ -35,6 +37,22 @@ class ChatResponse(BaseModel):
     reply: str
 
 
+def _check_ollama() -> bool:
+    """检测 Ollama 是否可连接"""
+    try:
+        req = urllib.request.Request(f"{OLLAMA_BASE}/api/tags")
+        with urllib.request.urlopen(req, timeout=2) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+@app.get("/status")
+def status():
+    """返回 Ollama 连接状态，供前端 STATUS 显示"""
+    return {"ollama": _check_ollama()}
+
+
 @app.get("/")
 def index():
     """返回前端页面，便于同源访问 /chat，无需单独起静态服务。"""
@@ -51,8 +69,8 @@ async def chat(req: ChatRequest):
     try:
         reply = await ollama_chat(
             messages=req.messages,
-            model="ollama/qwen3:8b",
-            api_base="http://localhost:11434",
+            model=OLLAMA_MODEL,
+            api_base=OLLAMA_BASE,
             stream=False,
         )
         return ChatResponse(reply=reply)
@@ -65,8 +83,8 @@ async def _sse_stream(messages: list):
     try:
         async for delta in ollama_chat_stream(
             messages=messages,
-            model="ollama/qwen3:8b",
-            api_base="http://localhost:11434",
+            model=OLLAMA_MODEL,
+            api_base=OLLAMA_BASE,
         ):
             yield f"data: {json.dumps({'delta': delta}, ensure_ascii=False)}\n\n"
         yield f"data: {json.dumps({'done': True})}\n\n"

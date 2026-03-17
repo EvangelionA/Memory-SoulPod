@@ -1,8 +1,12 @@
+"""LiteLLM 封装的 Ollama 调用，支持流式与非流式。"""
 from __future__ import annotations
 
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 from litellm import acompletion
+
+DEFAULT_MODEL = "ollama/qwen3:8b"
+DEFAULT_API_BASE = "http://localhost:11434"
 
 
 def _extract_message_content(response: Any) -> str:
@@ -15,8 +19,8 @@ def _extract_message_content(response: Any) -> str:
 
 async def ollama_chat_stream(
     messages: List[Dict[str, str]],
-    model: str = "ollama/qwen3:8b",
-    api_base: str = "http://localhost:11434",
+    model: str = DEFAULT_MODEL,
+    api_base: str = DEFAULT_API_BASE,
     extra_params: Optional[Dict[str, Any]] = None,
 ) -> AsyncIterator[str]:
     """
@@ -52,8 +56,8 @@ async def ollama_chat_stream(
 
 async def ollama_chat(
     messages: List[Dict[str, str]],
-    model: str = "ollama/qwen3:8b",
-    api_base: str = "http://localhost:11434",
+    model: str = DEFAULT_MODEL,
+    api_base: str = DEFAULT_API_BASE,
     stream: bool = False,
     extra_params: Optional[Dict[str, Any]] = None,
 ) -> str:

@@ -44,13 +44,10 @@ pip install -r requirements.txt
 # 1. 启动本地模型（需已安装 Ollama，并拉取 llama3）
 #    ollama run llama3
 
-# 2. 启动 Web 服务（在项目根目录执行，用 python -m 避免 PATH 未包含 uvicorn）
-python -m uvicorn src.server:app --reload --host 0.0.0.0 --port 8000
+# 2. 启动 Web 服务（在项目根目录执行）
+python -m src.core
 
-# 3. 浏览器打开 http://localhost:8000/ 或 http://127.0.0.1:8000/（不要用 0.0.0.0，Windows 下可能打不开）
-```
-
-仅使用命令行对话时可直接运行：`python -m src.core`
+# 3. 浏览器打开 http://localhost:8000/ 或 http://127.0.0.1:8000/
 
 ## 核心准则
 
