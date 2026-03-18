@@ -357,6 +357,7 @@
         const API_BASE = "http://localhost:8000";
         const TYPING_DOTS_MAX = 6;
         const TYPING_SPEED_MS = 52;
+        const STATUS_POLL_MS = 10000;
 
         let chatHistory = [];
 
@@ -583,6 +584,7 @@
             chatMessages.scrollTop = chatMessages.scrollHeight;
             cliInput.focus();
             updateOllamaStatus();
+            setInterval(updateOllamaStatus, STATUS_POLL_MS);
         };
     </script>
 </body>
