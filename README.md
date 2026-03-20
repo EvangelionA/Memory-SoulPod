@@ -49,6 +49,10 @@ python -m src.core
 
 # 3. 浏览器打开 http://localhost:8000/ 或 http://127.0.0.1:8000/
 
+# 可选：设置页 http://localhost:8000/settings（模型、API、角色提示词等写入 `config/app_runtime.json`，见 `config/app_runtime.example.json`）
+
+# 路由说明见 `docs/routes.md`
+
 ## 核心准则
 
 - **拒绝幻觉**：宁肯表达模糊印象，严禁编造关键人生经历

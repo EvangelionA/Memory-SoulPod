@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulPod Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: "Fira Code", monospace; background: #000; color: #c1c2c5; }
+        label { display: block; font-size: 0.7rem; color: rgba(193,194,197,0.7); margin-bottom: 0.25rem; }
+        input, textarea { width: 100%; background: #0d0e10; border: 1px solid #2c2e33; color: #e8b86d; padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+        textarea { min-height: 8rem; resize: vertical; }
+        .btn { padding: 0.5rem 1rem; font-size: 0.8rem; border: 1px solid #e8b86d; color: #e8b86d; background: transparent; cursor: pointer; }
+        .btn:hover { background: rgba(232, 184, 109, 0.12); }
+        .hint { font-size: 0.65rem; color: rgba(193,194,197,0.45); margin-top: 0.35rem; }
+    </style>
+</head>
+<body class="p-6 max-w-2xl mx-auto">
+    <header class="mb-8 flex justify-between items-center border-b border-[#2c2e33] pb-4">
+        <h1 class="text-sm tracking-widest text-[#e8b86d]">SOULPOD / SETTINGS</h1>
+        <a href="/" class="text-xs text-[#3bc9db] hover:underline">Back to chat</a>
+    </header>
+
+    <p class="text-xs text-gray-500 mb-6">Edit runtime config. Saved to <code class="text-[#e8b86d]">config/app_runtime.json</code>. Chat page reads this on each request.</p>
+
+    <form id="form" class="space-y-5">
+        <div>
+            <label for="model">LiteLLM model id</label>
+            <input id="model" name="model" type="text" placeholder="ollama/qwen3:8b" autocomplete="off">
+            <p class="hint">Examples: ollama/llama3, openai/gpt-4o (requires api_key + correct api_base).</p>
+        </div>
+        <div>
+            <label for="api_base">API base URL</label>
+            <input id="api_base" name="api_base" type="text" placeholder="http://localhost:11434" autocomplete="off">
+        </div>
+        <div>
+            <label for="api_key">API key (optional, local file only, not committed)</label>
+            <input id="api_key" name="api_key" type="password" placeholder="Leave blank to keep existing key" autocomplete="off">
+            <p class="hint">Save without typing here leaves the stored key unchanged.</p>
+            <button type="button" id="btn-clear-key" class="btn mt-2 text-xs">Clear API key</button>
+        </div>
+        <div>
+            <label for="system_prompt">System / role prompt (optional)</label>
+            <textarea id="system_prompt" name="system_prompt" placeholder="Prepended as system message to every chat..."></textarea>
+        </div>
+        <div class="flex flex-wrap gap-3 items-center">
+            <button type="submit" class="btn">Save</button>
+            <button type="button" id="btn-load" class="btn">Reload from server</button>
+            <button type="button" id="btn-import" class="btn">Import JSON file</button>
+            <input type="file" id="file-import" accept=".json,application/json" class="hidden">
+            <span id="msg" class="text-xs"></span>
+        </div>
+    </form>
+
+    <script>
+        async function loadConfig() {
+            const res = await fetch("/api/runtime-config");
+            if (!res.ok) throw new Error("load failed");
+            const d = await res.json();
+            document.getElementById("model").value = d.model || "";
+            document.getElementById("api_base").value = d.api_base || "";
+            document.getElementById("system_prompt").value = d.system_prompt || "";
+            document.getElementById("api_key").value = "";
+            document.getElementById("api_key").placeholder = d.api_key_set
+                ? "(key is set — enter new to replace, or use Clear)"
+                : "Optional";
+        }
+
+        document.getElementById("btn-load").addEventListener("click", () => {
+            loadConfig().then(() => setMsg("Reloaded.", "ok")).catch(() => setMsg("Reload failed.", "err"));
+        });
+
+        document.getElementById("btn-import").addEventListener("click", () => document.getElementById("file-import").click());
+        document.getElementById("file-import").addEventListener("change", (e) => {
+            const f = e.target.files[0];
+            if (!f) return;
+            const r = new FileReader();
+            r.onload = () => {
+                try {
+                    const j = JSON.parse(r.result);
+                    if (j.model != null) document.getElementById("model").value = j.model;
+                    if (j.api_base != null) document.getElementById("api_base").value = j.api_base;
+                    if (j.system_prompt != null) document.getElementById("system_prompt").value = j.system_prompt;
+                    if (j.api_key != null) document.getElementById("api_key").value = j.api_key;
+                    setMsg("Imported into form. Click Save to persist.", "ok");
+                } catch {
+                    setMsg("Invalid JSON.", "err");
+                }
+            };
+            r.readAsText(f);
+            e.target.value = "";
+        });
+
+        document.getElementById("btn-clear-key").addEventListener("click", async () => {
+            try {
+                const res = await fetch("/api/runtime-config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ api_key: "" }),
+                });
+                if (!res.ok) throw new Error("clear failed");
+                setMsg("API key cleared.", "ok");
+                await loadConfig();
+            } catch {
+                setMsg("Clear failed.", "err");
+            }
+        });
+
+        document.getElementById("form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const body = {
+                model: document.getElementById("model").value.trim(),
+                api_base: document.getElementById("api_base").value.trim(),
+                system_prompt: document.getElementById("system_prompt").value,
+            };
+            const key = document.getElementById("api_key").value;
+            if (key !== "") body.api_key = key;
+            try {
+                const res = await fetch("/api/runtime-config", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.detail || res.statusText);
+                setMsg("Saved.", "ok");
+                document.getElementById("api_key").value = "";
+                await loadConfig();
+            } catch (err) {
+                setMsg(String(err.message || err), "err");
+            }
+        });
+
+        function setMsg(t, kind) {
+            const el = document.getElementById("msg");
+            el.textContent = t;
+            el.style.color = kind === "ok" ? "#22c55e" : "#ef4444";
+        }
+
+        loadConfig().catch(() => setMsg("Could not load config.", "err"));
+    </script>
+</body>
+</html>
