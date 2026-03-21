@@ -21,13 +21,19 @@ Memory-SoulPod 旨在通过"人格解耦"技术，将亲人的记忆、性格和
 
 ```
 Memory-SoulPod/
-├── Core/                    # 核心文档
-│   ├── core.md              # 核心架构规范
-│   └── description.md       # 项目详细描述
-├── src/                     # 源代码
-├── config/                  # 配置文件
-├── docs/                    # 文档目录
-├── examples/                # 示例
+├── Core/                    # 核心文档（愿景与 DigitalTwinPackage 规范）
+│   ├── core.md
+│   └── description.md
+├── packages/                # 数字载体包目录（示例见 packages/_template，勿提交真实隐私数据）
+├── src/
+│   ├── server.py            # FastAPI（当前前后端对接入口）
+│   ├── liteLLM.py
+│   ├── core.py              # 启动入口 python -m src.core
+│   └── soulpod/             # 领域引擎（加载包、组 prompt、RAG/会话占位；尚未接入 HTTP）
+├── tools/                   # 离线工具（提取、人格推断等子包）
+├── config/                  # 运行时配置 app_runtime.json
+├── docs/                    # 文档（含 docs/package_layout.md）
+├── examples/
 └── README.md
 ```
 

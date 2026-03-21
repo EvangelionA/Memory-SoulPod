@@ -1,0 +1,5 @@
+{
+  "embedding_model": null,
+  "retrieval_top_k": 4,
+  "extra": {}
+}
