@@ -550,11 +550,12 @@
 
         document.addEventListener("click", () => cliInput.focus());
 
-        async function updateOllamaStatus(refresh = false) {
+        async function updateOllamaStatus() {
             const el = document.getElementById("status-ollama");
             if (!el) return;
             try {
-                const res = await fetch(`${API_BASE}/status${refresh ? "?refresh=1" : ""}`);
+                const res = await fetch(`${API_BASE}/status`);
+                if (!res.ok) throw new Error(String(res.status));
                 const data = await res.json().catch(() => ({}));
                 const label = data.mode === "web" ? "WEB" : "LOCAL";
                 if (data.connected) {
@@ -573,8 +574,8 @@
         window.onload = () => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             cliInput.focus();
-            updateOllamaStatus(true);
-            setInterval(() => updateOllamaStatus(false), STATUS_POLL_MS);
+            updateOllamaStatus();
+            setInterval(updateOllamaStatus, STATUS_POLL_MS);
         };
     </script>
 </body>

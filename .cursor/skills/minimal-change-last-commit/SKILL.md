@@ -2,9 +2,10 @@
 name: minimal-change-last-commit
 description: >-
   Constrains edits to the smallest diff against the latest git commit, without
-  changing behavior or broadening scope. Use when the user asks for minimal
-  changes, incremental fixes, refactor-without-behavior-change, or to avoid
-  over-editing compared to the last commit.
+  changing behavior or broadening scope; optionally stages/commits/pushes only
+  when the user asks. Use when the user asks for minimal changes, incremental
+  fixes, commit/push to remote, or to avoid over-editing compared to the last
+  commit.
 ---
 
 # Minimal change vs last commit
@@ -29,3 +30,12 @@ git diff HEAD
 ```
 
 If the diff touches files or concerns not mentioned in the task, trim it.
+
+## Git: commit locally and push to remote
+
+**Only when the user explicitly asks** to save to git, commit, or push (do not commit unprompted).
+
+1. **`git status`** / **`git diff HEAD`**: confirm the working tree matches the requested change; drop unrelated edits.
+2. **Stage minimally**: `git add` only paths needed for this task. Do not add `__pycache__/`, `*.pyc`, secrets, or ignored local config unless the user requires it.
+3. **Commit**: one focused message (e.g. conventional `type: summary`); body optional for extra context.
+4. **Push**: `git push` to the branch the user uses (often `origin main`); report errors (auth, non-fast-forward) without force-pushing unless the user explicitly requests it.
