@@ -1,1 +1,3 @@
 config/app_runtime.json
+__pycache__/
+*.py[cod]

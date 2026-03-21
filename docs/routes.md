@@ -8,7 +8,7 @@
 |------|------|------|
 | GET | `/` | 对话页 `index.html` |
 | GET | `/settings` | 设置页 `settings.html` |
-| GET | `/status` | Ollama 是否可达（供状态灯） |
+| GET | `/status` | 状态灯。本地：每次请求 LLM 探测。远程：默认用缓存；`?refresh=1` 探测并更新缓存；保存运行时配置会清空缓存。 |
 | GET | `/api/runtime-config` | 读取当前运行时配置（不含明文 API Key） |
 | POST | `/api/runtime-config` | 保存/合并运行时配置到 `config/app_runtime.json` |
 | POST | `/chat` | 非流式对话（可选） |

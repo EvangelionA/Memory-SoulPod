@@ -242,21 +242,9 @@
             font-size: 0.95rem;
             white-space: pre;
             display: inline-block;
-            caret-color: transparent;
-        }
-
-        .input-cursor {
-            width: 3px;
-            height: 1.1em;
-            margin-left: 0;
-            background: var(--term-fg);
-            animation: cursor-blink 1s step-end infinite;
-            display: inline-block;
-            vertical-align: text-bottom;
-        }
-
-        @keyframes cursor-blink {
-            50% { opacity: 0; }
+            caret-color: var(--term-fg);
+            /* Native caret follows arrow keys; block shape where supported (e.g. Chromium 121+). */
+            caret-shape: block;
         }
 
         .core-intent-border {
@@ -345,7 +333,6 @@
                 <div class="input-line" id="input-line">
                     <span class="prompt-prefix">&gt;&gt;&gt;</span>
                     <span id="cli-input" contenteditable="true" spellcheck="false"></span>
-                    <span class="input-cursor" aria-hidden="true"></span>
                 </div>
             </div>
         </main>
@@ -563,14 +550,15 @@
 
         document.addEventListener("click", () => cliInput.focus());
 
-        async function updateOllamaStatus() {
+        async function updateOllamaStatus(refresh = false) {
             const el = document.getElementById("status-ollama");
             if (!el) return;
             try {
-                const res = await fetch(`${API_BASE}/status`);
+                const res = await fetch(`${API_BASE}/status${refresh ? "?refresh=1" : ""}`);
                 const data = await res.json().catch(() => ({}));
-                if (data.ollama) {
-                    el.textContent = "STATUS: LOCAL";
+                const label = data.mode === "web" ? "WEB" : "LOCAL";
+                if (data.connected) {
+                    el.textContent = `STATUS: ${label}`;
                     el.className = "text-[10px] tracking-wider status-connected";
                 } else {
                     el.textContent = "STATUS: UNKNOW";
@@ -585,8 +573,8 @@
         window.onload = () => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
             cliInput.focus();
-            updateOllamaStatus();
-            setInterval(updateOllamaStatus, STATUS_POLL_MS);
+            updateOllamaStatus(true);
+            setInterval(() => updateOllamaStatus(false), STATUS_POLL_MS);
         };
     </script>
 </body>

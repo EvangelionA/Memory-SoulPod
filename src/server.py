@@ -4,7 +4,7 @@ SoulPod HTTP API: 供前端 index.html 调用的聊天接口。
 访问: http://localhost:8000/  设置页: http://localhost:8000/settings
 """
 import json
-import urllib.request
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from src.liteLLM import DEFAULT_API_BASE, DEFAULT_MODEL, ollama_chat, ollama_chat_stream
+from tools.prompt import LLM_CONNECTION_VERIFY_PROMPT
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_FILE = ROOT / "config" / "app_runtime.json"
@@ -24,6 +25,10 @@ DEFAULT_RUNTIME: Dict[str, str] = {
     "system_prompt": "",
     "api_key": "",
 }
+
+STATUS_LLM_TIMEOUT_SEC = 12.0
+STATUS_LLM_MAX_TOKENS = 64
+_web_status_cache: Optional[bool] = None  # web mode: filled by GET /status?refresh=1; cleared on config save
 
 app = FastAPI(title="SoulPod API", version="0.1.0")
 
@@ -80,12 +85,43 @@ def _litellm_extras(cfg: Dict[str, str]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _check_ollama(api_base: str) -> bool:
-    base = (api_base or DEFAULT_API_BASE).rstrip("/")
+def _is_local_ollama_runtime(cfg: Dict[str, str]) -> bool:
+    """True when LiteLLM model is Ollama (local)."""
+    return (cfg.get("model") or "").strip().lower().startswith("ollama/")
+
+
+def _parse_llm_verify_reply(text: str) -> bool:
+    """TRUE/FALSE word match; last match wins."""
+    matches = re.findall(r"\b(TRUE|FALSE)\b", (text or "").upper())
+    if not matches:
+        return False
+    return matches[-1] == "TRUE"
+
+
+async def _status_connected_via_llm(cfg: Dict[str, str]) -> bool:
+    """LLM probe using LLM_CONNECTION_VERIFY_PROMPT."""
+    model = (cfg.get("model") or DEFAULT_MODEL).strip()
+    api_base = (cfg.get("api_base") or DEFAULT_API_BASE).strip()
+    if not model:
+        return False
+    if not _is_local_ollama_runtime(cfg):
+        if not api_base.startswith("http"):
+            return False
+
+    extras = dict(_litellm_extras(cfg) or {})
+    extras.setdefault("timeout", STATUS_LLM_TIMEOUT_SEC)
+    extras.setdefault("max_tokens", STATUS_LLM_MAX_TOKENS)
+
+    messages = [{"role": "user", "content": LLM_CONNECTION_VERIFY_PROMPT}]
     try:
-        req = urllib.request.Request(f"{base}/api/tags")
-        with urllib.request.urlopen(req, timeout=2) as r:
-            return r.status == 200
+        reply = await ollama_chat(
+            messages=messages,
+            model=model,
+            api_base=api_base or DEFAULT_API_BASE,
+            stream=False,
+            extra_params=extras,
+        )
+        return _parse_llm_verify_reply(reply)
     except Exception:
         return False
 
@@ -106,9 +142,23 @@ class RuntimeConfigPatch(BaseModel):
 
 
 @app.get("/status")
-def status():
+async def status(refresh: bool = False):
     cfg = get_runtime_config()
-    return {"ollama": _check_ollama(cfg["api_base"])}
+    local = _is_local_ollama_runtime(cfg)
+    global _web_status_cache
+
+    if local or refresh:
+        connected = await _status_connected_via_llm(cfg)
+        if not local and refresh:
+            _web_status_cache = connected
+    else:
+        connected = _web_status_cache if _web_status_cache is not None else False
+
+    return {
+        "mode": "local" if local else "web",
+        "connected": connected,
+        "ollama": connected if local else False,
+    }
 
 
 @app.get("/api/runtime-config")
@@ -118,12 +168,14 @@ def get_runtime_config_api():
 
 @app.post("/api/runtime-config")
 def post_runtime_config(patch: RuntimeConfigPatch):
+    global _web_status_cache
     cur = get_runtime_config()
     data = patch.model_dump(exclude_unset=True)
     for k, v in data.items():
         if k in DEFAULT_RUNTIME and v is not None:
             cur[k] = v
     save_runtime_config(cur)
+    _web_status_cache = None
     return public_runtime_config()
 
 
