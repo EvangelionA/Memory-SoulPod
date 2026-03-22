@@ -1,7 +1,7 @@
 """
 Load and validate a DigitalTwinPackage directory (profile, prompts, config, memories).
 
-Not wired into ``src.server`` yet; safe to evolve without affecting current APIs.
+When ``soul_package_enabled`` is set in runtime config, ``src.server`` loads packages via ``try_load_soul_package``.
 """
 
 from __future__ import annotations

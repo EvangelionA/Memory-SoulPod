@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 class PackageConfig(BaseModel):
     """Technical knobs for one DigitalTwinPackage instance."""
 
+    schema_version: int = Field(default=1, ge=1, description="Package config JSON schema revision")
     embedding_model: Optional[str] = Field(default=None, description="LiteLLM or local embedding id")
     retrieval_top_k: Optional[int] = Field(default=None, ge=1, le=100)
     extra: dict[str, Any] = Field(default_factory=dict)

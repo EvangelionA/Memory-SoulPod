@@ -44,6 +44,18 @@
             <label for="system_prompt">System / role prompt (optional)</label>
             <textarea id="system_prompt" name="system_prompt" placeholder="Prepended as system message to every chat..."></textarea>
         </div>
+        <div class="border border-[#2c2e33] p-4 space-y-4 rounded">
+            <p class="text-[0.65rem] text-gray-500 mb-2">DigitalTwinPackage (Phase A): when enabled, loads profile + system_prompts.txt from the folder; relative paths are under project root. No RAG yet.</p>
+            <div class="flex items-center gap-2">
+                <input id="soul_package_enabled" name="soul_package_enabled" type="checkbox" class="w-auto">
+                <label for="soul_package_enabled" class="!mb-0">Enable soul package</label>
+            </div>
+            <div>
+                <label for="soul_package_path">Soul package path</label>
+                <input id="soul_package_path" name="soul_package_path" type="text" placeholder="packages/_template or absolute path" autocomplete="off">
+                <p class="hint">Requires profile.json, config.json, system_prompts.txt. If load fails, server falls back to runtime system prompt only.</p>
+            </div>
+        </div>
         <div class="flex flex-wrap gap-3 items-center">
             <button type="submit" class="btn">Save</button>
             <button type="button" id="btn-load" class="btn">Reload from server</button>
@@ -61,6 +73,8 @@
             document.getElementById("model").value = d.model || "";
             document.getElementById("api_base").value = d.api_base || "";
             document.getElementById("system_prompt").value = d.system_prompt || "";
+            document.getElementById("soul_package_enabled").checked = !!d.soul_package_enabled;
+            document.getElementById("soul_package_path").value = d.soul_package_path || "";
             document.getElementById("api_key").value = "";
             document.getElementById("api_key").placeholder = d.api_key_set
                 ? "(key is set — enter new to replace, or use Clear)"
@@ -82,6 +96,8 @@
                     if (j.model != null) document.getElementById("model").value = j.model;
                     if (j.api_base != null) document.getElementById("api_base").value = j.api_base;
                     if (j.system_prompt != null) document.getElementById("system_prompt").value = j.system_prompt;
+                    if (j.soul_package_enabled != null) document.getElementById("soul_package_enabled").checked = !!j.soul_package_enabled;
+                    if (j.soul_package_path != null) document.getElementById("soul_package_path").value = j.soul_package_path;
                     if (j.api_key != null) document.getElementById("api_key").value = j.api_key;
                     setMsg("Imported into form. Click Save to persist.", "ok");
                 } catch {
@@ -113,6 +129,8 @@
                 model: document.getElementById("model").value.trim(),
                 api_base: document.getElementById("api_base").value.trim(),
                 system_prompt: document.getElementById("system_prompt").value,
+                soul_package_enabled: document.getElementById("soul_package_enabled").checked,
+                soul_package_path: document.getElementById("soul_package_path").value.trim(),
             };
             const key = document.getElementById("api_key").value;
             if (key !== "") body.api_key = key;

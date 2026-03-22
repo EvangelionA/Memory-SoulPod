@@ -14,6 +14,7 @@ class SoulProfile(BaseModel):
     Minimal profile placeholder. Add Big Five, relations, and style fields in later phases.
     """
 
+    schema_version: int = Field(default=1, ge=1, description="Package JSON schema revision")
     display_name: str = Field(..., description="Name or how the user addresses this soul")
     relationship_to_user: Optional[str] = Field(
         default=None, description="e.g. father, grandmother (localized string)"

@@ -2,5 +2,7 @@
   "model": "ollama/qwen3:8b",
   "api_base": "http://localhost:11434",
   "system_prompt": "",
-  "api_key": ""
+  "api_key": "",
+  "soul_package_enabled": false,
+  "soul_package_path": ""
 }

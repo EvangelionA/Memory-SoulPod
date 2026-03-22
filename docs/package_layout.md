@@ -14,6 +14,7 @@
 ## Canonical product docs
 
 - `Core/core.md`, `Core/description.md` — vision, trinity architecture, golden rules.
+- `docs/glossary.md` — Package, Profile, RAG, Runtime config (phase 0 terminology).
 
 Integration plan: call `build_system_prompt` and `load_soul_package` from `src/server.py` only after adding a safe config switch and UI for package path, without breaking existing `system_prompt` behavior.
 

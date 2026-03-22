@@ -9,8 +9,8 @@
 | GET | `/` | 对话页 `index.html` |
 | GET | `/settings` | 设置页 `settings.html` |
 | GET | `/status` | 状态灯。本地：HTTP `GET {api_base}/api/tags` 是否 200。远程：HTTP `GET api_base` 是否得到 &lt;500 的响应。 |
-| GET | `/api/runtime-config` | 读取当前运行时配置（不含明文 API Key） |
-| POST | `/api/runtime-config` | 保存/合并运行时配置到 `config/app_runtime.json` |
+| GET | `/api/runtime-config` | 读取当前运行时配置（不含明文 API Key；含 `soul_package_enabled`、`soul_package_path`） |
+| POST | `/api/runtime-config` | 保存/合并运行时配置到 `config/app_runtime.json`（可提交 `soul_package_enabled`、`soul_package_path`） |
 | POST | `/chat` | 非流式对话（可选） |
 | POST | `/chat/stream` | 流式对话（前端当前使用） |
 

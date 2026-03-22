@@ -31,11 +31,17 @@ Memory-SoulPod/
 │   ├── core.py              # 启动入口 python -m src.core
 │   └── soulpod/             # 领域引擎（加载包、组 prompt、RAG/会话占位；尚未接入 HTTP）
 ├── tools/                   # 离线工具（提取、人格推断等子包）
-├── config/                  # 运行时配置 app_runtime.json
-├── docs/                    # 文档（含 docs/package_layout.md）
+├── config/                  # 运行时配置（见 config/README.md；app_runtime.json 不入库）
+├── docs/                    # 文档（含 docs/package_layout.md、docs/glossary.md）
 ├── examples/
 └── README.md
 ```
+
+## 环境要求
+
+- **Python** 3.10 或更高（开发与运行推荐 3.10+）。
+- **依赖**：见仓库根目录 `requirements.txt`（主要包含 FastAPI、Uvicorn、LiteLLM、Pydantic 等）；安装：`pip install -r requirements.txt`。
+- **术语**：Package（载体包）、Profile（人物画像）、RAG（长期记忆检索）、Runtime config（`config/app_runtime.json`）— 见 [`docs/glossary.md`](docs/glossary.md)。
 
 ## 快速开始
 
@@ -47,8 +53,13 @@ cd Memory-SoulPod
 # 安装依赖
 pip install -r requirements.txt
 
-# 1. 启动本地模型（需已安装 Ollama，并拉取 llama3）
-#    ollama run llama3
+# 0. 本地运行时配置（可选：复制示例后编辑，或通过 /settings 页面保存）
+#    copy config\app_runtime.example.json config\app_runtime.json   # Windows
+#    cp config/app_runtime.example.json config/app_runtime.json        # Unix
+#    app_runtime.json 已被 .gitignore 忽略，勿提交真实 API Key
+
+# 1. 启动本地模型（若使用 Ollama：安装 Ollama 并拉取与配置一致的模型，例如示例中的 qwen3:8b）
+#    ollama pull qwen3:8b
 
 # 2. 启动 Web 服务（在项目根目录执行）
 python -m src.core
